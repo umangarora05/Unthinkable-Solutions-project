@@ -8,7 +8,7 @@
   --line: #dfe5da;
   --sage: #dbe7d5;
   --leaf: #325b43;
-  --coral: #ed6d51;
+  --coral: #3f7f68;
   --shadow: 0 20px 60px rgba(48, 69, 49, 0.08);
 }
 
@@ -60,7 +60,7 @@ button {
   box-shadow: var(--shadow);
 }
 
-.dark-mode { --ink: #eef3e9; --muted: #a7b4a5; --paper: #152019; --panel: #223128; --line: #3a5041; --sage: #314638; --leaf: #cfe4c7; --coral: #ff8b6c; --shadow: 0 14px 38px rgba(0, 0, 0, .14); color: var(--ink); background-image: linear-gradient(180deg, #304638 0%, #2b4033 24%, #25372d 50%, #1d2c23 76%, #152019 100%); background-color: var(--paper); }
+.dark-mode { --ink: #eef3e9; --muted: #a7b4a5; --paper: #152019; --panel: #223128; --line: #3a5041; --sage: #314638; --leaf: #cfe4c7; --coral: #78b89a; --shadow: 0 14px 38px rgba(0, 0, 0, .14); color: var(--ink); background-image: linear-gradient(180deg, #304638 0%, #2b4033 24%, #25372d 50%, #1d2c23 76%, #152019 100%); background-color: var(--paper); }
 .topbar, .hero, .workspace, .footer { max-width: 1180px; margin: 0 auto; }
 .topbar { height: 74px; display: flex; align-items: center; justify-content: space-between; padding: 0 24px; color: var(--ink); }
 .brand, .nav-meta, .status-dot, .icon-button, .upload-controls, .select-wrap, .process-button, .clear-file, .export-button, .copy-button { display: flex; align-items: center; }
