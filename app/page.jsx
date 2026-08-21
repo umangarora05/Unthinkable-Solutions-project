@@ -5,7 +5,7 @@ import { Document, HeadingLevel, Packer, Paragraph, TextRun } from "docx";
 import { jsPDF } from "jspdf";
 import { AudioLines, Check, ChevronDown, Clipboard, Download, FileAudio, FileText, KeyRound, Moon, Play, Settings, Sun, Upload, X } from "lucide-react";
 
-const FASTAPI_URL = import.meta.env.VITE_FASTAPI_URL || "http://127.0.0.1:8001";
+const FASTAPI_URL = (import.meta.env.VITE_FASTAPI_URL || "http://127.0.0.1:8001").replace(/\/+$/, "");
 
 const demoSummary = {
   overview: "Upload a meeting recording to turn the conversation into a clear brief with decisions, owners, and next steps.",
