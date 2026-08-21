@@ -4,6 +4,7 @@ import base64
 import mimetypes
 import tempfile
 import subprocess
+import shutil
 from pathlib import Path
 
 from fastapi import FastAPI, File, Form, HTTPException, Request, UploadFile
@@ -18,6 +19,9 @@ configured_origins = [origin.strip() for origin in os.getenv("CORS_ORIGINS", "")
 default_origins = ["http://localhost:5173", "http://127.0.0.1:5173", "https://morrow.umangarora.in"]
 allowed_origins = list(dict.fromkeys(configured_origins + default_origins))
 app.add_middleware(CORSMiddleware, allow_origins=allowed_origins, allow_origin_regex=r"https://[a-z0-9-]+\.onrender\.com", allow_methods=["*"], allow_headers=["*"])
+
+MAX_UPLOAD_BYTES = 100 * 1024 * 1024
+MAX_INLINE_AUDIO_BYTES = 25 * 1024 * 1024
 
 def parse_json_response(value):
     cleaned = value.strip().removeprefix("```json").removesuffix("```").strip()
@@ -58,7 +62,7 @@ async def process_with_gemini(file_path, filename, mode, api_key, requested_mode
 def extract_video_audio(video_path):
     audio_path = f"{video_path}.wav"
     try:
-        subprocess.run(["ffmpeg", "-y", "-i", video_path, "-vn", "-acodec", "pcm_s16le", "-ar", "16000", "-ac", "1", audio_path], check=True, capture_output=True, text=True)
+        subprocess.run(["ffmpeg", "-loglevel", "error", "-y", "-i", video_path, "-vn", "-acodec", "pcm_s16le", "-ar", "16000", "-ac", "1", audio_path], check=True, capture_output=True, text=True)
     except FileNotFoundError as error:
         raise HTTPException(status_code=503, detail="Video processing requires FFmpeg on the API service.") from error
     except subprocess.CalledProcessError as error:
@@ -86,20 +90,29 @@ async def process_audio(request: Request, file: UploadFile = File(...), mode: st
         raise HTTPException(status_code=503, detail=f"{provider.upper()} API key is not configured. Add it from the settings button in the app.")
 
     suffix = Path(file.filename).suffix.lower()
+    temporary_path = ""
     with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as temporary:
-        temporary.write(await file.read())
         temporary_path = temporary.name
+        upload_size = 0
+        while chunk := await file.read(1024 * 1024):
+            upload_size += len(chunk)
+            if upload_size > MAX_UPLOAD_BYTES:
+                Path(temporary_path).unlink(missing_ok=True)
+                raise HTTPException(status_code=413, detail="This file is too large. Please upload a file smaller than 100 MB.")
+            temporary.write(chunk)
     processing_path = temporary_path
     is_video = suffix in (".mp4", ".mov", ".avi", ".mkv", ".mpeg", ".mpg")
     try:
+        if is_video:
+            processing_path = extract_video_audio(temporary_path)
+        if Path(processing_path).stat().st_size > MAX_INLINE_AUDIO_BYTES and provider == "gemini":
+            raise HTTPException(status_code=413, detail="This recording is too long for the selected provider. Use OpenAI or upload a shorter file.")
         if provider == "gemini":
-            transcript, summary = await process_with_gemini(temporary_path, file.filename, mode, provider_key, requested_model or "gemini-3.6-flash")
+            transcript, summary = await process_with_gemini(processing_path, Path(processing_path).name, mode, provider_key, requested_model or "gemini-3.6-flash")
             summary.setdefault("overview", "")
             summary.setdefault("keyDecisions", [])
             summary["actionItems"] = [{"id": item.get("id", f"action-{index + 1}"), "task": item.get("task", ""), "assignee": item.get("assignee") or None, "priority": item.get("priority", "Medium")} for index, item in enumerate(summary.get("actionItems", [])) if item.get("task")]
             return {"transcript": transcript, "summary": summary}
-        if is_video:
-            processing_path = extract_video_audio(temporary_path)
         client = OpenAI(api_key=provider_key)
         with open(processing_path, "rb") as audio:
             result = client.audio.translations.create(file=audio, model="whisper-1", response_format="text") if mode == "hi-to-en" else client.audio.transcriptions.create(file=audio, model="whisper-1", response_format="text")

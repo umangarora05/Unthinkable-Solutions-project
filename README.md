@@ -20,7 +20,8 @@ https://github.com/umangarora05/Unthinkable-Solutions-project
 - English audio or video to English transcript.
 - Hindi audio or video to English transcript through Whisper translations or Gemini audio/video.
 - OpenAI GPT-4o-mini or Google Gemini 2.5 Flash JSON meeting analysis.
-- MP3, WAV, M4A, and WEBM drag-and-drop upload.
+- MP3, WAV, M4A, WEBM, MP4, MOV, AVI, MKV, MPEG, and MPG drag-and-drop upload.
+- Uploads are limited to 100 MB. Video audio is extracted with FFmpeg before OpenAI processing; Gemini inline processing is limited to smaller recordings.
 - Persistent light/dark theme, transcript copy, checked action items, and PDF/Word export.
 - React static frontend and FastAPI ML service.
 
@@ -134,7 +135,7 @@ Replace the value with the actual public URL of your FastAPI service. Do not add
 2. Confirm the frontend loads.
 3. Open the FastAPI health URL: `https://your-api.onrender.com/health`.
 4. Enter an OpenAI or Gemini key from the settings button.
-5. Upload an MP3, WAV, M4A, or WEBM recording and summarize it.
+5. Upload a supported audio or video recording and summarize it.
 
 Render free services can sleep after inactivity, so the first request after a pause may take longer. Use a paid instance for reliable production processing and long audio workloads.
 
@@ -151,7 +152,7 @@ The application should be checked locally before submission:
 2. Start the Vite frontend on port `5173`.
 3. Open `http://localhost:5173`.
 4. Enter an AI provider key from the settings panel.
-5. Upload a supported audio file and verify the summary, action items, transcript, and exports.
+5. Upload a supported audio or video file and verify the summary, action items, transcript, and exports.
 
 ## Submission Checklist
 
