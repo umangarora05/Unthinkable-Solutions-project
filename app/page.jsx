@@ -5,6 +5,8 @@ import { Document, HeadingLevel, Packer, Paragraph, TextRun } from "docx";
 import { jsPDF } from "jspdf";
 import { AudioLines, Check, ChevronDown, Clipboard, Download, FileAudio, FileText, KeyRound, Moon, Play, Settings, Sun, Upload, X } from "lucide-react";
 
+const FASTAPI_URL = import.meta.env.VITE_FASTAPI_URL || "http://127.0.0.1:8001";
+
 const demoSummary = {
   overview: "Upload a meeting recording to turn the conversation into a clear brief with decisions, owners, and next steps.",
   keyDecisions: ["Your key decisions will appear here after processing."],
@@ -118,9 +120,9 @@ export default function Home() {
   const processMeeting = async () => {
     if (!file) return setError("Add an audio recording first.");
     setLoading(true); setError("");
-    const data = new FormData(); data.append("file", file); data.append("mode", mode); data.append("provider", provider); data.append("model", model); if (apiKey) data.append("apiKey", apiKey);
+    const data = new FormData(); data.append("file", file); data.append("mode", mode);
     try {
-      const response = await fetch("/api/process-audio", { method: "POST", body: data });
+      const response = await fetch(`${FASTAPI_URL}/process-audio`, { method: "POST", body: data, headers: { "x-ai-provider": provider, ...(apiKey ? { "x-ai-api-key": apiKey } : {}), ...(model ? { "x-ai-model": model } : {}) } });
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || "Could not process this recording.");
       setTranscript(result.transcript); setSummary(result.summary); setChecked([]);

@@ -13,7 +13,7 @@ from dotenv import load_dotenv
 load_dotenv(Path(__file__).with_name(".env"))
 
 app = FastAPI(title="Morrow Meeting Intelligence")
-app.add_middleware(CORSMiddleware, allow_origins=["http://localhost:3000"], allow_methods=["POST"], allow_headers=["*"])
+app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 
 def parse_json_response(value):
     cleaned = value.strip().removeprefix("```json").removesuffix("```").strip()

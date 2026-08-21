@@ -9,11 +9,11 @@ Morrow turns meeting recordings into a focused brief: an executive overview, key
 - OpenAI GPT-4o-mini or Google Gemini 2.5 Flash JSON meeting analysis.
 - MP3, WAV, M4A, and WEBM drag-and-drop upload.
 - Persistent light/dark theme, transcript copy, checked action items, and PDF/Word export.
-- React frontend, Node.js multipart proxy, and FastAPI ML service.
+- React static frontend and FastAPI ML service.
 
 ## Architecture
 
-The browser posts to the Next.js React route at `/api/process-audio`. Node forwards the multipart request to FastAPI. FastAPI calls the selected OpenAI or Gemini model, then returns the structured result. Provider keys can be entered from the settings panel and are sent only with processing requests.
+The browser sends the audio request directly to FastAPI. FastAPI calls the selected OpenAI or Gemini model, then returns the structured result. Provider keys can be entered from the settings panel and are sent only with processing requests.
 
 ## Setup
 
@@ -24,12 +24,12 @@ npm install
 copy .env.example .env.local
 ```
 
-Configure `.env.local` (or enter either key from the settings button in the app):
+The root `.env.local` only configures the frontend URL:
 
 ```env
 OPENAI_API_KEY=your_openai_api_key_here
 GEMINI_API_KEY=your_gemini_api_key_here
-FASTAPI_URL=http://127.0.0.1:8001
+VITE_FASTAPI_URL=http://127.0.0.1:8001
 ```
 
 Run FastAPI:
@@ -52,11 +52,11 @@ cd meeting-summarizer
 npm run dev
 ```
 
-Open `http://localhost:3000`.
+Open `http://localhost:5173`.
 
 ## Deploy on Render
 
-Deploy this repository as two Render Web Services. The Next.js service proxies audio requests to the FastAPI service, so the browser only needs the frontend URL.
+Deploy this repository as one Render Web Service for FastAPI and one Render Static Site for React.
 
 ### 1. Deploy FastAPI
 
@@ -78,22 +78,21 @@ GEMINI_API_KEY=your_gemini_api_key_here
 
 The app also accepts provider keys entered through its settings panel, so server-side keys are optional.
 
-### 2. Deploy Next.js
+### 2. Deploy the React static site
 
-Create a second **Web Service** connected to the same repository with:
+Create a **Static Site** connected to the same repository with:
 
 - **Root Directory:** leave blank
-- **Runtime:** `Node`
-- **Build Command:** `npm ci && npm run build`
-- **Start Command:** `npm start`
+- **Build Command:** `npm install && npm run build`
+- **Publish Directory:** `dist`
 
-Add this environment variable to the Next.js service:
+Add this environment variable to the static site:
 
 ```env
-FASTAPI_URL=https://morrow-api.onrender.com
+VITE_FASTAPI_URL=https://morrow-api.onrender.com
 ```
 
-Replace the value with the actual public URL of your FastAPI service. Do not add `/process-audio`; the Next.js route appends that path.
+Replace the value with the actual public URL of your FastAPI service. Do not add `/process-audio`; the frontend appends that path.
 
 ### 3. Verify the deployment
 
@@ -115,6 +114,6 @@ python -m py_compile fastapi/main.py
 ## Submission compliance
 
 - Primary branch: `main`.
-- `.gitignore` excludes dependencies, `.next`, environment files, build output, and editor metadata.
+- `.gitignore` excludes dependencies, `dist`, environment files, build output, and editor metadata.
 - No real secrets are committed; only `.env.example` files are included.
 - Demo video: `<add demo video link>`
