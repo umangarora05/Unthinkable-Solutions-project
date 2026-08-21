@@ -13,7 +13,9 @@ from dotenv import load_dotenv
 load_dotenv(Path(__file__).with_name(".env"))
 
 app = FastAPI(title="Morrow Meeting Intelligence")
-app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
+configured_origins = [origin.strip() for origin in os.getenv("CORS_ORIGINS", "").split(",") if origin.strip()]
+allowed_origins = configured_origins or ["http://localhost:5173", "http://127.0.0.1:5173"]
+app.add_middleware(CORSMiddleware, allow_origins=allowed_origins, allow_methods=["*"], allow_headers=["*"])
 
 def parse_json_response(value):
     cleaned = value.strip().removeprefix("```json").removesuffix("```").strip()

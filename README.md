@@ -2,6 +2,17 @@
 
 Morrow turns meeting recordings into a focused brief: an executive overview, key decisions, owners, priorities, and a transcript.
 
+## Assignment Submission
+
+Public GitHub repository:
+
+https://github.com/umangarora05/Unthinkable-Solutions-project
+
+- Primary branch: `main`
+- Repository visibility: public/open-source
+- Submission format: GitHub repository
+- The repository is intended to be downloaded and run from the project root.
+
 ## Features
 
 - English audio to English transcript.
@@ -14,6 +25,26 @@ Morrow turns meeting recordings into a focused brief: an executive overview, key
 ## Architecture
 
 The browser sends the audio request directly to FastAPI. FastAPI calls the selected OpenAI or Gemini model, then returns the structured result. Provider keys can be entered from the settings panel and are sent only with processing requests.
+
+## Project Structure
+
+```text
+meeting-summarizer/
+├── app/page.jsx              # Main React application
+├── src/main.jsx              # Vite entry point
+├── app/globals.css           # Application styles
+├── fastapi/main.py           # FastAPI service and AI routing
+├── fastapi/requirements.txt  # Python dependencies
+├── package.json              # Frontend scripts and dependencies
+├── vite.config.mjs           # Vite configuration
+└── .env.example              # Safe configuration template
+```
+
+Only application source files, configuration templates, and required dependency manifests are included. Generated files and local configuration are excluded through `.gitignore`.
+
+## Dependencies
+
+The frontend uses React, Vite, `lucide-react`, `jspdf`, and `docx`. The backend uses FastAPI, Uvicorn, OpenAI, HTTPX, `python-dotenv`, and the required multipart/form-data support. No dependency folders or generated build artifacts are committed.
 
 ## Setup
 
@@ -74,6 +105,7 @@ Optional FastAPI environment variables:
 ```env
 OPENAI_API_KEY=your_openai_api_key_here
 GEMINI_API_KEY=your_gemini_api_key_here
+CORS_ORIGINS=https://your-frontend.onrender.com
 ```
 
 The app also accepts provider keys entered through its settings panel, so server-side keys are optional.
@@ -111,9 +143,21 @@ npm run build
 python -m py_compile fastapi/main.py
 ```
 
-## Submission compliance
+The application should be checked locally before submission:
 
-- Primary branch: `main`.
-- `.gitignore` excludes dependencies, `dist`, environment files, build output, and editor metadata.
-- No real secrets are committed; only `.env.example` files are included.
-- Demo video: `<add demo video link>`
+1. Start FastAPI on port `8001`.
+2. Start the Vite frontend on port `5173`.
+3. Open `http://localhost:5173`.
+4. Enter an AI provider key from the settings panel.
+5. Upload a supported audio file and verify the summary, action items, transcript, and exports.
+
+## Submission Checklist
+
+- [x] Code is pushed to the public GitHub repository.
+- [x] Branch is named `main`.
+- [x] No `node_modules`, `.venv`, `dist`, `.next`, `out`, or editor folders are committed.
+- [x] No `.env` files or real API keys are committed.
+- [x] Required dependency manifests are included for reproducible setup.
+- [x] Frontend build passes with `npm run build`.
+- [x] FastAPI source passes `python -m py_compile fastapi/main.py`.
+- [x] Setup and Render deployment instructions are documented above.

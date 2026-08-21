@@ -123,17 +123,34 @@ export default function Home() {
     const data = new FormData(); data.append("file", file); data.append("mode", mode);
     try {
       const response = await fetch(`${FASTAPI_URL}/process-audio`, { method: "POST", body: data, headers: { "x-ai-provider": provider, ...(apiKey ? { "x-ai-api-key": apiKey } : {}), ...(model ? { "x-ai-model": model } : {}) } });
-      const result = await response.json();
-      if (!response.ok) throw new Error(result.error || "Could not process this recording.");
-      setTranscript(result.transcript); setSummary(result.summary); setChecked([]);
-    } catch (processingError) { setError(processingError.message); } finally { setLoading(false); }
+
+      let payload = null;
+      try {
+        payload = await response.json();
+      } catch {
+        payload = null;
+      }
+
+      if (!response.ok) {
+        const detail = payload?.detail || payload?.error || payload?.message || "Could not process this recording.";
+        throw new Error(detail);
+      }
+
+      setTranscript(payload.transcript); setSummary(payload.summary); setChecked([]);
+    } catch (processingError) {
+      const message = processingError instanceof Error ? processingError.message : "Could not process this recording.";
+      const friendlyMessage = message === "Failed to fetch"
+        ? `Unable to reach the AI service at ${FASTAPI_URL}. Start the FastAPI backend or update the VITE_FASTAPI_URL value.`
+        : message;
+      setError(friendlyMessage);
+    } finally { setLoading(false); }
   };
 
   const toggleItem = (id) => setChecked((items) => items.includes(id) ? items.filter((item) => item !== id) : [...items, id]);
 
   return <main className={`app-shell ${dark ? "dark-mode" : ""}`}>
     <nav className="topbar sans"><div className="brand"><span className="brand-mark"><AudioLines size={18} /></span><span>Morrow</span></div><div className="nav-meta"><span className="status-dot" /> Private workspace <button className="icon-button" aria-label="API key settings" onClick={() => setShowSettings(!showSettings)}><Settings size={17} /></button><button className="icon-button" aria-label="Toggle theme" onClick={() => setDark(!dark)}>{dark ? <Sun size={17} /> : <Moon size={17} />}</button></div></nav>
-    {showSettings && <div className="settings-panel panel-shadow sans"><div className="settings-title"><KeyRound size={17} /><strong>AI provider</strong><button className="close-settings" aria-label="Close settings" onClick={() => setShowSettings(false)}><X size={15} /></button></div><p>Choose a provider and model. Your key stays in this browser and is sent only with processing requests.</p><select className="provider-select" value={providerDraft} onChange={(event) => { const nextProvider = event.target.value; const nextModel = localStorage.getItem(`morrow-${nextProvider}-model`) || (nextProvider === "gemini" ? "gemini-3.6-flash" : "gpt-4o-mini"); setProviderDraft(nextProvider); setKeyDraft(localStorage.getItem(`morrow-${nextProvider}-key`) || ""); setModelDraft(nextModel); }}><option value="openai">OpenAI · Whisper + GPT</option><option value="gemini">Google Gemini · audio + analysis</option></select><input value={modelDraft} onChange={(event) => setModelDraft(event.target.value)} placeholder={providerDraft === "gemini" ? "gemini-3.6-flash" : "gpt-4o-mini"} autoComplete="off" /><input type="password" value={keyDraft} onChange={(event) => setKeyDraft(event.target.value)} placeholder={providerDraft === "gemini" ? "AIza..." : "sk-..."} autoComplete="off" /><div className="settings-actions"><button onClick={() => { const nextModel = modelDraft.trim(); localStorage.setItem(`morrow-${providerDraft}-key`, keyDraft.trim()); localStorage.setItem(`morrow-${providerDraft}-model`, nextModel); localStorage.setItem("morrow-ai-provider", providerDraft); setProvider(providerDraft); setApiKey(keyDraft.trim()); setModel(nextModel); setShowSettings(false); setError(""); }}>Save key and model</button><button className="remove-key" onClick={() => { localStorage.removeItem(`morrow-${providerDraft}-key`); setKeyDraft(""); setApiKey(""); }}>Remove key</button></div></div>}
+    {showSettings && <div className="settings-panel panel-shadow sans"><div className="settings-title"><KeyRound size={17} /><strong>AI provider</strong><button className="close-settings" aria-label="Close settings" onClick={() => setShowSettings(false)}><X size={15} /></button></div><p>Choose a provider and model. Your key stays in this browser and is sent only with processing requests.</p><select className="provider-select" value={providerDraft} onChange={(event) => { const nextProvider = event.target.value; const nextModel = localStorage.getItem(`morrow-${nextProvider}-model`) || (nextProvider === "gemini" ? "gemini-3.6-flash" : "gpt-4o-mini"); setProviderDraft(nextProvider); setKeyDraft(localStorage.getItem(`morrow-${nextProvider}-key`) || ""); setModelDraft(nextModel); }}><option value="openai">OpenAI · Whisper + GPT</option><option value="gemini">Google Gemini · audio + analysis</option></select><input value={modelDraft} onChange={(event) => setModelDraft(event.target.value)} placeholder={providerDraft === "gemini" ? "gemini-3.6-flash" : "gpt-4o-mini"} autoComplete="off" /><input type="password" value={keyDraft} onChange={(event) => setKeyDraft(event.target.value)} placeholder={providerDraft === "gemini" ? "API Key" : "sk-..."} autoComplete="off" /><div className="settings-actions"><button onClick={() => { const nextModel = modelDraft.trim(); localStorage.setItem(`morrow-${providerDraft}-key`, keyDraft.trim()); localStorage.setItem(`morrow-${providerDraft}-model`, nextModel); localStorage.setItem("morrow-ai-provider", providerDraft); setProvider(providerDraft); setApiKey(keyDraft.trim()); setModel(nextModel); setShowSettings(false); setError(""); }}>Save key and model</button><button className="remove-key" onClick={() => { localStorage.removeItem(`morrow-${providerDraft}-key`); setKeyDraft(""); setApiKey(""); }}>Remove key</button></div></div>}
     <section className="hero"><div><p className="eyebrow sans">MEETING INTELLIGENCE / 01</p><h1>Make the meeting<br /><em>move forward.</em></h1><p className="hero-copy">A calm place for the conversation after the conversation. Drop in a recording and leave with clarity.</p></div><div className="hero-note soft-grid"><span className="sans">TODAY&apos;S NOTE</span><strong>Less listening.<br />More doing.</strong><small>Transcripts, decisions, and owners in one considered brief.</small></div></section>
     <section className="workspace">
       <div className="upload-panel panel-shadow"><div className={`dropzone ${dragging ? "dragging" : ""}`} onDragOver={(event) => { event.preventDefault(); setDragging(true); }} onDragLeave={() => setDragging(false)} onDrop={(event) => { event.preventDefault(); setDragging(false); chooseFile(event.dataTransfer.files[0]); }} onClick={() => inputRef.current?.click()}>
