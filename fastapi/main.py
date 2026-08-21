@@ -3,6 +3,7 @@ import os
 import base64
 import mimetypes
 import tempfile
+import subprocess
 from pathlib import Path
 
 from fastapi import FastAPI, File, Form, HTTPException, Request, UploadFile
@@ -53,6 +54,16 @@ async def process_with_gemini(file_path, filename, mode, api_key, requested_mode
     result = parse_json_response(content)
     return result.get("transcript", ""), result.get("summary", result)
 
+def extract_video_audio(video_path):
+    audio_path = f"{video_path}.wav"
+    try:
+        subprocess.run(["ffmpeg", "-y", "-i", video_path, "-vn", "-acodec", "pcm_s16le", "-ar", "16000", "-ac", "1", audio_path], check=True, capture_output=True, text=True)
+    except FileNotFoundError as error:
+        raise HTTPException(status_code=503, detail="Video processing requires FFmpeg on the API service.") from error
+    except subprocess.CalledProcessError as error:
+        raise HTTPException(status_code=422, detail="Could not extract an audio track from this video.") from error
+    return audio_path
+
 @app.get("/health")
 def health():
     return {"status": "ok", "openai_configured": bool(os.getenv("OPENAI_API_KEY"))}
@@ -61,8 +72,9 @@ def health():
 async def process_audio(request: Request, file: UploadFile = File(...), mode: str = Form(...)):
     if mode not in ("en-to-en", "hi-to-en"):
         raise HTTPException(status_code=400, detail="Choose en-to-en or hi-to-en.")
-    if not file.filename or Path(file.filename).suffix.lower() not in (".mp3", ".wav", ".m4a", ".webm"):
-        raise HTTPException(status_code=400, detail="Unsupported audio format.")
+    supported_extensions = (".mp3", ".wav", ".m4a", ".webm", ".mp4", ".mov", ".avi", ".mkv", ".mpeg", ".mpg")
+    if not file.filename or Path(file.filename).suffix.lower() not in supported_extensions:
+        raise HTTPException(status_code=400, detail="Unsupported audio or video format.")
     provider = request.headers.get("x-ai-provider", "openai")
     requested_model = request.headers.get("x-ai-model")
     request_key = request.headers.get("x-ai-api-key")
@@ -76,6 +88,8 @@ async def process_audio(request: Request, file: UploadFile = File(...), mode: st
     with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as temporary:
         temporary.write(await file.read())
         temporary_path = temporary.name
+    processing_path = temporary_path
+    is_video = suffix in (".mp4", ".mov", ".avi", ".mkv", ".mpeg", ".mpg")
     try:
         if provider == "gemini":
             transcript, summary = await process_with_gemini(temporary_path, file.filename, mode, provider_key, requested_model or "gemini-3.6-flash")
@@ -83,8 +97,10 @@ async def process_audio(request: Request, file: UploadFile = File(...), mode: st
             summary.setdefault("keyDecisions", [])
             summary["actionItems"] = [{"id": item.get("id", f"action-{index + 1}"), "task": item.get("task", ""), "assignee": item.get("assignee") or None, "priority": item.get("priority", "Medium")} for index, item in enumerate(summary.get("actionItems", [])) if item.get("task")]
             return {"transcript": transcript, "summary": summary}
+        if is_video:
+            processing_path = extract_video_audio(temporary_path)
         client = OpenAI(api_key=provider_key)
-        with open(temporary_path, "rb") as audio:
+        with open(processing_path, "rb") as audio:
             result = client.audio.translations.create(file=audio, model="whisper-1", response_format="text") if mode == "hi-to-en" else client.audio.transcriptions.create(file=audio, model="whisper-1", response_format="text")
         transcript = result if isinstance(result, str) else result.text
         completion = client.chat.completions.create(model=requested_model or "gpt-4o-mini", temperature=0.2, response_format={"type": "json_object"}, messages=[
@@ -104,3 +120,5 @@ async def process_audio(request: Request, file: UploadFile = File(...), mode: st
         raise HTTPException(status_code=502, detail=f"AI processing failed: {error}") from error
     finally:
         Path(temporary_path).unlink(missing_ok=True)
+        if processing_path != temporary_path:
+            Path(processing_path).unlink(missing_ok=True)

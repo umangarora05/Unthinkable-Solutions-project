@@ -17,8 +17,8 @@ https://github.com/umangarora05/Unthinkable-Solutions-project
 
 ## Features
 
-- English audio to English transcript.
-- Hindi audio to English transcript through Whisper translations or Gemini audio.
+- English audio or video to English transcript.
+- Hindi audio or video to English transcript through Whisper translations or Gemini audio/video.
 - OpenAI GPT-4o-mini or Google Gemini 2.5 Flash JSON meeting analysis.
 - MP3, WAV, M4A, and WEBM drag-and-drop upload.
 - Persistent light/dark theme, transcript copy, checked action items, and PDF/Word export.

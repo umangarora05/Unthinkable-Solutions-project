@@ -4,3 +4,4 @@ python-multipart==0.0.20
 openai==1.99.9
 python-dotenv==1.1.1
 httpx==0.28.1
+# Render must also provide the FFmpeg executable for video audio extraction.
