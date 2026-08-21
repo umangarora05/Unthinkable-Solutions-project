@@ -93,11 +93,10 @@ h1 em { color: var(--coral); font-style: italic; }
 .upload-controls { justify-content: space-between; padding: 18px 9px 4px; gap: 16px; }
 .audio-player { display: block; width: calc(100% - 18px); margin: 15px 9px 0; height: 34px; }
 .upload-controls label { color: var(--muted); font-size: 10px; letter-spacing: .08em; text-transform: uppercase; }
-.select-wrap { position: relative; margin-top: 7px; }
-select { appearance: none; border: 0; outline: 0; color: var(--ink); background: transparent; font-size: 14px; letter-spacing: 0; text-transform: none; padding-right: 30px; }
-.dark-mode select,
-.dark-mode select option { background-color: #223128; color: #eef3e9; }
-.select-wrap svg { position: absolute; right: 4px; pointer-events: none; }
+.select-wrap { position: relative; margin-top: 7px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); overflow: hidden; }
+select { appearance: none; -webkit-appearance: none; border: 0; outline: 0; color: var(--ink); background: transparent; font-size: 14px; letter-spacing: 0; text-transform: none; width: 100%; padding: 10px 35px 10px 12px; }
+.dark-mode select { background-color: #223128; color: #eef3e9; }
+.select-wrap svg { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); pointer-events: none; }
 .process-button { gap: 9px; border: 0; border-radius: 8px; background: var(--leaf); color: #fff; padding: 14px 21px; font-size: 13px; transition: transform .2s, opacity .2s; }
 .process-button:hover:not(:disabled) { transform: translateY(-2px); }
 .process-button:disabled { opacity: .45; cursor: not-allowed; }
