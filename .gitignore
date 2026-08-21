@@ -20,6 +20,12 @@
 # production
 /build
 
+# local workspace and generated output
+/.vscode
+/dist
+__pycache__/
+*.pyc
+
 # misc
 .DS_Store
 *.pem
