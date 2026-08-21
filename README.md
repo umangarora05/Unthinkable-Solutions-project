@@ -54,6 +54,57 @@ npm run dev
 
 Open `http://localhost:3000`.
 
+## Deploy on Render
+
+Deploy this repository as two Render Web Services. The Next.js service proxies audio requests to the FastAPI service, so the browser only needs the frontend URL.
+
+### 1. Deploy FastAPI
+
+Create a new **Web Service** connected to this repository with:
+
+- **Root Directory:** `fastapi`
+- **Runtime:** `Python 3`
+- **Build Command:** `pip install -r requirements.txt`
+- **Start Command:** `uvicorn main:app --host 0.0.0.0 --port $PORT`
+
+After the service deploys, copy its public URL, for example `https://morrow-api.onrender.com`.
+
+Optional FastAPI environment variables:
+
+```env
+OPENAI_API_KEY=your_openai_api_key_here
+GEMINI_API_KEY=your_gemini_api_key_here
+```
+
+The app also accepts provider keys entered through its settings panel, so server-side keys are optional.
+
+### 2. Deploy Next.js
+
+Create a second **Web Service** connected to the same repository with:
+
+- **Root Directory:** leave blank
+- **Runtime:** `Node`
+- **Build Command:** `npm ci && npm run build`
+- **Start Command:** `npm start`
+
+Add this environment variable to the Next.js service:
+
+```env
+FASTAPI_URL=https://morrow-api.onrender.com
+```
+
+Replace the value with the actual public URL of your FastAPI service. Do not add `/process-audio`; the Next.js route appends that path.
+
+### 3. Verify the deployment
+
+1. Open `https://your-frontend.onrender.com`.
+2. Confirm the frontend loads.
+3. Open the FastAPI health URL: `https://your-api.onrender.com/health`.
+4. Enter an OpenAI or Gemini key from the settings button.
+5. Upload an MP3, WAV, M4A, or WEBM recording and summarize it.
+
+Render free services can sleep after inactivity, so the first request after a pause may take longer. Use a paid instance for reliable production processing and long audio workloads.
+
 ## Validation
 
 ```bash
